@@ -21,8 +21,8 @@ def _xeus_declare_variable(obj, newname):
         return ''
 
 class sos_xeus_cling:
-    background_color = '#9400D3'
     supported_kernels = {'C++11': ['xeus-cling-cpp11'], 'C++14' : ['xeus-cling-cpp14'], 'C++17' : ['xeus-cling-cpp17']}
+    background_color = {'C++11': '#DDA0DD', 'C++14': '#D8BFD8', 'C++17': '#E6E6FA'}
     options = {}
     cd_command = '#include <unistd.h>\nchdir("{dir}");'
 

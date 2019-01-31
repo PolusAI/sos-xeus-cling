@@ -43,6 +43,8 @@ setup(name = "sos-xeus-cling",
       ],
     entry_points= '''
 [sos_languages]
-Cpp = sos_xeus_cling.kernel:sos_xeus_cling
+C++11 = sos_xeus_cling.kernel:sos_xeus_cling
+C++14 = sos_xeus_cling.kernel:sos_xeus_cling
+C++17 = sos_xeus_cling.kernel:sos_xeus_cling
 '''
 )
