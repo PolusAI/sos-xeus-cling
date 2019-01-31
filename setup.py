@@ -6,7 +6,7 @@
 from setuptools import find_packages, setup
 
 # obtain version of SoS
-with open('src/sos_scala/_version.py') as version:
+with open('src/sos_xeus_cling/_version.py') as version:
     for line in version:
         if line.startswith('__version__'):
             __version__ = eval(line.split('=')[1])
