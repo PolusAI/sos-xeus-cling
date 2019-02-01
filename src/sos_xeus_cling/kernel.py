@@ -12,14 +12,6 @@ from collections import Sequence
 from IPython.core.error import UsageError
 import re
 
-# C++    length (n)    Python
-# <C++ type>    0    <Python type>
-def _xeus_declare_variable(obj, newname):
-    if isinstance(obj, (int, str)):
-        return 'int ' + newname + ' = ' + repr(obj)
-    else:
-        return ''
-
 class sos_xeus_cling:
     supported_kernels = {'C++11': ['xeus-cling-cpp11'], 'C++14' : ['xeus-cling-cpp14'], 'C++17' : ['xeus-cling-cpp17']}
     background_color = {'C++11': '#DDA0DD', 'C++14': '#D8BFD8', 'C++17': '#E6E6FA'}
@@ -32,7 +24,12 @@ class sos_xeus_cling:
         self.init_statements = ''
 
     def get_vars(self, names):
-        pass
+        for name in names:
+            var = env.sos_dict[name]
+            if isinstance(obj, (int, str)):
+                newvar = 'int ' + newname + ' = ' + repr(obj)
+                self.sos_kernel.run_cell(f'{newvar}', True, False,
+                     on_error=f'Failed to put variable {name} to scala')
 
     def put_vars(self, items, to_kernel=None):
         return {}
