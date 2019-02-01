@@ -26,10 +26,10 @@ class sos_xeus_cling:
     def get_vars(self, names):
         for name in names:
             var = env.sos_dict[name]
-            if isinstance(obj, (int, str)):
-                newvar = 'int ' + newname + ' = ' + repr(obj)
+            if isinstance(var, (int, str)):
+                newvar = 'int ' + name + ' = ' + repr(var)
                 self.sos_kernel.run_cell(f'{newvar}', True, False,
-                     on_error=f'Failed to put variable {name} to scala')
+                     on_error=f'Failed to put variable {name} to C++')
 
     def put_vars(self, items, to_kernel=None):
         return {}
