@@ -46,4 +46,30 @@ class sos_xeus_cling:
                      on_error=f'Failed to put variable {name} to C++')
 
     def put_vars(self, items, to_kernel=None):
-        return {}
+        # self.sos_kernel.warn(
+                # f'Debug')
+        result = {}
+        for item in items:
+            # item - string with variable name (in C++)
+            response = self.sos_kernel.get_response('{}'.format(item), ('execute_result',))[0][1]['data']['text/plain']
+            result[item] = response
+            # self.sos_kernel.warn("%i" % result[item])
+
+            cpp_type = self.sos_kernel.get_response('typename({})'.format(item), ('execute_result',))[0][1]['data']['text/plain']
+            # self.sos_kernel.warn("%s" % cpp_type)
+
+            #Convert string to appropriate type in SoS
+
+            # cpp_type = self.sos_kernel.get_response('typename({})'.format(item), ('stream',), name=('stdout',))[0][1]
+            # self.sos_kernel.warn("%s" % cpp_type)
+            # if cpp_type == 'int':
+                # print(cpp_type)
+                # print(item)
+                # response = self.sos_kernel.get_response('{}'.format(item), ('stream',))[0][1]
+                # expr = response['text']
+                # result[item] = eval(expr)
+            # print(cpp_type)
+            # self.sos_kernel.warn(
+                # f'Variable of type: is passed to SoS kernel')
+        # print(result)
+        return result
