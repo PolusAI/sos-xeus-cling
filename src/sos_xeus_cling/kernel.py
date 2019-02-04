@@ -21,7 +21,7 @@ class sos_xeus_cling:
     def __init__(self, sos_kernel, kernel_name='scala'):
         self.sos_kernel = sos_kernel
         self.kernel_name = kernel_name
-        self.init_statements = ''
+        self.init_statements = '#import "utils.hpp"'
 
     def get_vars(self, names):
         for name in names:
