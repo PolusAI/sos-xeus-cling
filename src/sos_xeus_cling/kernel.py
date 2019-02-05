@@ -13,8 +13,9 @@ from IPython.core.error import UsageError
 import re
 
 cpp_init_statements = r'''
+#include <iostream>
 #define typename(x) _Generic((x),                                                 \
-         bool: "_Bool",                  unsigned char: "unsigned char",          \
+         bool: "bool",                  unsigned char: "unsigned char",          \
          char: "char",                     signed char: "signed char",            \
     short int: "short int",         unsigned short int: "unsigned short int",     \
           int: "int",                     unsigned int: "unsigned int",           \
@@ -28,7 +29,7 @@ long long int: "long long int", unsigned long long int: "unsigned long long int"
 
 class sos_xeus_cling:
     supported_kernels = {'C++11': ['xeus-cling-cpp11'], 'C++14' : ['xeus-cling-cpp14'], 'C++17' : ['xeus-cling-cpp17']}
-    background_color = {'C++11': '#DDA0DD', 'C++14': '#D8BFD8', 'C++17': '#E6E6FA'}
+    background_color = {'C++11': '#B3BFFF', 'C++14': '#D5CCFF', 'C++17': '#EAE6FF'}
     options = {}
     cd_command = '#include <unistd.h>\nchdir("{dir}");'
 
@@ -51,10 +52,26 @@ class sos_xeus_cling:
             # item - string with variable name (in C++)
             value = self.sos_kernel.get_response('{}'.format(item), ('execute_result',))[0][1]['data']['text/plain']
             cpp_type = self.sos_kernel.get_response('typename({})'.format(item), ('execute_result',))[0][1]['data']['text/plain']
+            self.sos_kernel.warn(value)
+            self.sos_kernel.warn(cpp_type)
 
             #Convert string value to appropriate type in SoS
-            if cpp_type == '"int"':
+            integer_types = ['"int"', '"short int"', '"long int"', '"long long int"']
+            real_types = ['"float"', '"double"']
+            
+            if cpp_type in integer_types:
+                self.sos_kernel.warn('converting integer type')
                 result[item] = int(value)
-            elif cpp_type == '"float"' or cpp_type == '"double"':
+            elif cpp_type in real_types:
+                if value[-1] == 'f':
+                    value = value[:-1]
+                self.sos_kernel.warn('converting real number type')
                 result[item] = float(value)
+            elif cpp_type == '"bool"':
+                if value == 'true':
+                    result[item] = True
+                else:
+                    result[item] = False
+            else:
+                self.sos_kernel.warn(f'Type {cpp_type} is not supported')
         return result
