@@ -7,6 +7,25 @@ This language extension to SoS allows to use C++ with xeus-cling Jupyter kernel 
 
 ### Supported variable types for transfer
 
+#### From SoS to C++ (`%get` magic):
+
+| Source: SoS (Python) type | Destination: C++ type |
+|---------------------------|-----------------------|
+| `int`                     | `int`                 |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+|                           |                       |
+
 #### From C++ to SoS (`%put` magic):
 
 | Source: C++ type                             | Destination: SoS (Python) type |
@@ -26,4 +45,3 @@ This language extension to SoS allows to use C++ with xeus-cling Jupyter kernel 
 |                                              |                                |
 |                                              |                                |
 
-#### From SoS to C++ (`%get` magic):
