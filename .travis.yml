@@ -1,3 +1,7 @@
+dist: xenial
+group: edge
+os:
+    - linux
 language: python
 python:
     - "3.7"
