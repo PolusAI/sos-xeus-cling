@@ -23,7 +23,7 @@ before_install:
   - python -m sos_notebook.install
   # xeus-cling
   - conda install xeus-cling xwidgets notebook xtensor xtl xframe -c conda-forge/label/gcc7
-
+  - pip install pytest pytest-cov
 
 sudo: required
 services:
