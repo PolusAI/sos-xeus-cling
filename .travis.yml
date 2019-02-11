@@ -1,0 +1,35 @@
+dist: bionic
+group: edge
+os:
+    - linux
+language: python
+python:
+    - "3.7"
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y gcc
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+  - wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - hash -r
+  - conda config --set always_yes yes --set changeps1 no
+  - conda update -q conda
+  - conda info -a
+  # SoS Notebook
+  - sudo apt-get install libmagickwand-dev graphviz
+  - pip install jedi notebook nbconvert nbformat pyyaml psutil tqdm scipy
+  - pip install pygments ipython wand graphviz sos sos-bash sos-python sos-notebook
+  - python -m sos_notebook.install
+  # xeus-cling
+  - conda install xeus-cling xwidgets notebook xtensor xtl xframe -c conda-forge/label/gcc7
+  - pip install pytest pytest-cov nose
+
+sudo: required
+services:
+    - docker
+install: "pip install . -U"
+before_script:
+    - cd test
+script:
+    - pytest -x -v  --cov-report=xml
