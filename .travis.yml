@@ -1,4 +1,4 @@
-dist: xenial
+dist: bionic
 group: edge
 os:
     - linux
@@ -17,7 +17,7 @@ before_install:
   - conda update -q conda
   - conda info -a
   # SoS Notebook
-  - sudo apt-get install libmagickwand-dev libmagickcore5-extra graphviz
+  - sudo apt-get install libmagickwand-dev graphviz
   - pip install jedi notebook nbconvert nbformat pyyaml psutil tqdm scipy
   - pip install pygments ipython wand graphviz sos sos-bash sos-python sos-notebook
   - python -m sos_notebook.install
