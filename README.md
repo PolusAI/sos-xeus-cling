@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/ktaletsk/sos-xeus-cling.svg?branch=dev)](https://travis-ci.org/ktaletsk/sos-xeus-cling)
 # sos-xeus-cling
 ## SoS extension for C++. Developed independently from original SoS team. Please refer to [SoS Homepage](http://vatlab.github.io/SoS/) for details.
 
