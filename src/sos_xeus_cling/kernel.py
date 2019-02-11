@@ -25,33 +25,33 @@ cpp_init_statements = f'#include "{os.path.split(__file__)[0]}/utils.hpp"'
 
 def _sos_to_cpp_type(obj):
     ''' Returns corresponding C++ data type string for provided Python object '''
-    if isinstance(obj, (int, np.intc)):
+    if isinstance(obj, (int, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)):
         if obj >= -2147483648 and obj <= 2147483647:
-            return 'int' #{name} = {repr(obj)};'
+            return 'int', repr(obj)
         elif obj >= -9223372036854775808 and obj <= 9223372036854775807:
-            return 'long int' #{name} = {repr(obj)};'
+            return 'long int', repr(obj)
         else:
-            return -1 #Integer is out of bounds
-    elif isinstance(obj, float):
+            return -1, None #Integer is out of bounds
+    elif isinstance(obj, (float, np.float16, np.float32, np.float64)):
         if (obj >= -3.40282e+38 and obj <= -1.17549e-38) or (obj >= 1.17549e-38 and obj <= 3.40282e+38):
-            return 'float' #{name} = {repr(obj)};'
+            return 'float', repr(obj)
         elif (obj >= -1.79769e+308 and obj <= -2.22507e-308) or (obj >= 2.22507e-308 and obj <= 1.79769e+308):
-            return 'double' #{name} = {repr(obj)};'
+            return 'double', repr(obj)
         else:
-            return -1
+            return -1, None
     elif isinstance(obj, np.longdouble):
         if (obj >= -1.18973e+4932 and obj <= -3.3621e-4932) or (obj >= 3.3621e-4932 and obj <= 1.18973e+4932):
-            return 'long double' #{name} = {repr(obj)}L;'
+            return 'long double', repr(obj)
     elif isinstance(obj, str):
-        return 'std::string'
-    elif isinstance(obj, bool):
-        return 'bool'
+        return 'std::string', '"'+obj+'"'
+    elif isinstance(obj, (bool, np.bool_)):
+        return 'bool', 'true' if obj==True else 'false'
     else:
-        return -1
+        return -1, None
 
 class sos_xeus_cling:
-    supported_kernels = {'C++11': ['xeus-cling-cpp11'], 'C++14' : ['xeus-cling-cpp14'], 'C++17' : ['xeus-cling-cpp17']}
     background_color = {'C++11': '#B3BFFF', 'C++14': '#D5CCFF', 'C++17': '#EAE6FF'}
+    supported_kernels = {'C++11': ['xeus-cling-cpp11'], 'C++14' : ['xeus-cling-cpp14'], 'C++17' : ['xeus-cling-cpp17']}
     options = {}
     cd_command = '#include <unistd.h>\nchdir("{dir}");'
 
@@ -62,7 +62,14 @@ class sos_xeus_cling:
 
     def _Cpp_declare_command_string(self, name, obj):
         #Check if object is scalar
-        if isinstance(obj, (Sequence, np.ndarray, dict, pd.core.frame.DataFrame)) and not isinstance(obj, str):
+        if isinstance(obj, (int, np.intc, float, np.longdouble, str, bool)):
+            #do scalar declaration
+            obj_type, obj_val = _sos_to_cpp_type(obj)
+            if not obj_type == -1:
+                return f'{obj_type} {name} = {obj_val};'
+            else:
+                return None
+        elif isinstance(obj, (Sequence, np.ndarray, dict, pd.core.frame.DataFrame)):
             #do vector things
             if len(obj) == 0:
                 #TODO: how to deal with an empty array?
@@ -72,18 +79,25 @@ class sos_xeus_cling:
                     keys = obj.keys()
                     values = obj.values()
                     if homogeneous_type(keys) and homogeneous_type(values):
-                        return f'std::map<{_sos_to_cpp_type(next(iter(keys)))}, {_sos_to_cpp_type(next(iter(values)))}> {name};'
+                        dict_value = '{ ' + ', '.join([f'{{{ _sos_to_cpp_type(d[0])[1] }, { _sos_to_cpp_type(d[1])[1] }}}' for d in obj.items()])  + ' }'
+                        return f'std::map<{_sos_to_cpp_type(next(iter(keys)))[0]}, {_sos_to_cpp_type(next(iter(values)))[0]}> {name} = {dict_value};'
                     else:
                         return None
-                else:
-                    return _sos_to_cpp_type(obj)
+                elif isinstance(obj, Sequence):
+                    if homogeneous_type(obj):
+                        seq_value = '{ ' + ', '.join([_sos_to_cpp_type(s)[1] for s in obj]) + ' }'
+                        return f'std::vector<{ _sos_to_cpp_type(next(iter(obj)))[0] }> {name} = {seq_value};'
+                    else:
+                        return None
+                elif isinstance(obj, np.ndarray):
+                    ndarr_value = '{ ' + ', '.join([_sos_to_cpp_type(s)[1] for s in obj.flatten()]) + ' }'
+                    ndarr_shape = '{ ' + ','.join([str(i) for i in obj.shape]) + ' }'
+                    return f'xt::xarray<{ _sos_to_cpp_type(obj.flat[0])[0] }> {name} = {ndarr_value}; {name}.reshape({ndarr_shape})'
         else:
-            #do scalar declaration
-            obj_type = _sos_to_cpp_type(obj)
-            if not obj_type == -1:
-                return f'{obj_type} {name} = {repr(obj)};'
-            else:
-                return None
+            #unsupported type
+            return None
+
+            
 
     def get_vars(self, names):
         for name in names:

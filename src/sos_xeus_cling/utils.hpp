@@ -3,6 +3,10 @@
 #include <cstdlib>
 #include <memory>
 #include <cxxabi.h>
+#include "xtensor/xarray.hpp"
+#include "xtensor/xio.hpp"
+#include "xtensor/xview.hpp"
+
 std::string demangle(const char* name) {
     int status = -4; // some arbitrary value to eliminate the compiler warning
     std::unique_ptr<char, void(*)(void*)> res {
