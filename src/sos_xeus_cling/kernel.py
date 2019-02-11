@@ -25,8 +25,10 @@ cpp_init_statements = f'#include "{os.path.split(__file__)[0]}/utils.hpp"'
 
 def _sos_to_cpp_type(obj):
     ''' Returns corresponding C++ data type string for provided Python object '''
-    if isinstance(obj, (int, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64)):
-        if obj >= -2147483648 and obj <= 2147483647:
+    if isinstance(obj, (int, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64, bool, np.bool_)):
+        if isinstance(obj, (bool, np.bool_)):
+            return 'bool', 'true' if obj==True else 'false'
+        elif obj >= -2147483648 and obj <= 2147483647:
             return 'int', repr(obj)
         elif obj >= -9223372036854775808 and obj <= 9223372036854775807:
             return 'long int', repr(obj)
@@ -44,8 +46,7 @@ def _sos_to_cpp_type(obj):
             return 'long double', repr(obj)
     elif isinstance(obj, str):
         return 'std::string', '"'+obj+'"'
-    elif isinstance(obj, (bool, np.bool_)):
-        return 'bool', 'true' if obj==True else 'false'
+    
     else:
         return -1, None
 
@@ -62,7 +63,7 @@ class sos_xeus_cling:
 
     def _Cpp_declare_command_string(self, name, obj):
         #Check if object is scalar
-        if isinstance(obj, (int, np.intc, float, np.longdouble, str, bool)):
+        if isinstance(obj, (int, np.intc, np.intp, np.int8, np.int16, np.int32, np.int64, float, np.float16, np.float32, np.float64, np.longdouble, str, bool, np.bool_)):
             #do scalar declaration
             obj_type, obj_val = _sos_to_cpp_type(obj)
             if not obj_type == -1:
@@ -103,7 +104,7 @@ class sos_xeus_cling:
         for name in names:
             # self.sos_kernel.warn(name)
             cpp_repr = self._Cpp_declare_command_string(name, env.sos_dict[name])
-            self.sos_kernel.warn(cpp_repr)
+            # self.sos_kernel.warn(cpp_repr)
             if not cpp_repr==None:
                 self.sos_kernel.run_cell(cpp_repr, True, False,
                  on_error=f'Failed to put variable {name} to C++')
@@ -114,25 +115,25 @@ class sos_xeus_cling:
             # item - string with variable name (in C++)
             value = self.sos_kernel.get_response('std::cout<<{};'.format(item), ('stream',))[0][1]['text']
             cpp_type = self.sos_kernel.get_response(f'type({item})', ('execute_result',))[0][1]['data']['text/plain']
-            self.sos_kernel.warn(value)
-            self.sos_kernel.warn(cpp_type)
+            # self.sos_kernel.warn(value)
+            # self.sos_kernel.warn(cpp_type)
 
             #Convert string value to appropriate type in SoS
             integer_types = ['"int"', '"short"', '"long"', '"long long"']
             real_types = ['"float"', '"double"']
             if cpp_type in integer_types:
-                self.sos_kernel.warn('converting integer type')
+                # self.sos_kernel.warn('converting integer type')
                 result[item] = int(value)
             elif cpp_type in real_types:
                 if value[-1] == 'f':
                     value = value[:-1]
-                self.sos_kernel.warn('converting real number type')
+                # self.sos_kernel.warn('converting real number type')
                 result[item] = float(value)
             elif cpp_type == '"long double"':
-                self.sos_kernel.warn('converting long double number type')
+                # self.sos_kernel.warn('converting long double number type')
                 result[item] = np.longdouble(value)
             elif cpp_type == '"char"':
-                self.sos_kernel.warn('converting char type')
+                # self.sos_kernel.warn('converting char type')
                 result[item] = value
             elif cpp_type == '"bool"':
                 if value == 'true':

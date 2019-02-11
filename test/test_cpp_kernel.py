@@ -35,7 +35,7 @@ class TestCppKernel(unittest.TestCase):
             clear_channels(iopub)
             execute(kc=kc, code='%use C++14')
             wait_for_idle(kc)
-            execute(kc=kc, code='%get int1 int2 int4 float1')
+            execute(kc=kc, code='%get int1 int2 int4 float1 float2 float3 string1 bool1')
             wait_for_idle(kc)
 
             #Test int1
@@ -43,21 +43,48 @@ class TestCppKernel(unittest.TestCase):
             stdout, _ = assemble_output(iopub)
             self.assertEqual(stdout.strip(),'10')
 
+            #Test int2
+            execute(kc=kc, code='std::cout << int2;')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'1000000000000000000')
+
             # #Test int2
             # execute(kc=kc, code='std::cout << int2;')
             # stdout, _ = assemble_output(iopub)
             # self.assertEqual(stdout.strip(),'1000000000000000000')
 
-            # #Test int4
-            # execute(kc=kc, code='std::cout << int4;')
-            # stdout, _ = assemble_output(iopub)
-            # self.assertEqual(stdout.strip(),'20')
+            #Test int4
+            execute(kc=kc, code='std::cout << int4;')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'20')
 
+            #Test float1
+            execute(kc=kc, code='std::cout << float1;')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'0.1')
+
+            #Test float2
+            execute(kc=kc, code='std::cout << float2;')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'1e+50')
+
+            #Test float3
+            execute(kc=kc, code='std::cout << float3;')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'inf')
+
+            #Test string1
+            execute(kc=kc, code='std::cout << string1;')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'abc')
+
+            #Test bool1
+            execute(kc=kc, code='std::cout << (bool1?"true":"false");')
+            stdout, _ = assemble_output(iopub)
+            self.assertEqual(stdout.strip(),'true')
 
             execute(kc=kc, code="%use sos")
             wait_for_idle(kc)
-
-
 
 if __name__ == '__main__':
     unittest.main()
