@@ -94,6 +94,13 @@ class sos_xeus_cling:
                     ndarr_value = '{ ' + ', '.join([_sos_to_cpp_type(s)[1] for s in obj.flatten()]) + ' }'
                     ndarr_shape = '{ ' + ','.join([str(i) for i in obj.shape]) + ' }'
                     return f'xt::xarray<{ _sos_to_cpp_type(obj.flat[0])[0] }> {name} = {ndarr_value}; {name}.reshape({ndarr_shape})'
+                elif isinstance(obj, pd.core.frame.DataFrame):
+                    df_cols = '{ ' + ','.join([_sos_to_cpp_type(j)[1] for j in obj.columns.tolist()]) + ' }'
+                    df_rows = '{ ' + ','.join([_sos_to_cpp_type(i)[1] for i in obj.index.values]) + ' }'
+                    df_type = _sos_to_cpp_type(obj.values.flatten()[0])[0]
+                    df_flat_list = '{ ' + ', '.join([_sos_to_cpp_type(s)[1] for s in obj.values.flatten()]) + ' }'
+                    df_shape = '{ ' + ','.join([str(i) for i in obj.values.shape]) + ' }'
+                    return f'xt::xarray<{df_type}> {name}_data = {df_flat_list}; {name}_data.reshape({df_shape}); auto {name}_x_axis = xf::axis({df_rows}); auto {name}_y_axis = xf::axis({df_cols}); auto {name}_coord = xf::coordinate({{{{"x", {name}_x_axis}}, {{"y", {name}_y_axis}}}}); auto {name}_dim = xf::dimension({{"x", "y"}}); auto {name} = xf::variable({name}_data,{name}_coord,{name}_dim);'
         else:
             #unsupported type
             return None

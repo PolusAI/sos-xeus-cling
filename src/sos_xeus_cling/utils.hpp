@@ -6,6 +6,9 @@
 #include "xtensor/xarray.hpp"
 #include "xtensor/xio.hpp"
 #include "xtensor/xview.hpp"
+#include "xtensor/xrandom.hpp"
+#include "xframe/xio.hpp"
+#include "xframe/xvariable.hpp"
 
 std::string demangle(const char* name) {
     int status = -4; // some arbitrary value to eliminate the compiler warning
