@@ -29,7 +29,7 @@ Non-scalar types
 | `dict` (only homogeneous keys and values)             | `std::map<key_type, val_type>` |
 | Sequence (`list`, `tuple`; only homogeneous elements) | `std::vector<type>`            |
 | `numpy.ndarray`                                       | [Xtensor](https://github.com/QuantStack/xtensor) `xt::xarray`           |
-| ❌`pandas.DataFrame`                                    | [Xframe](https://github.com/QuantStack/xframe)                         |
+| `pandas.DataFrame`                                    | [Xframe](https://github.com/QuantStack/xframe)                         |
 |                                                       |                                |
 
 #### From C++ to SoS (`%put` magic):
