@@ -50,6 +50,32 @@ def _sos_to_cpp_type(obj):
     else:
         return -1, None
 
+def _cpp_scalar_to_sos(cpp_type, value):
+    #Convert string value to appropriate type in SoS
+    integer_types = ['"int"', '"short"', '"long"', '"long long"']
+    real_types = ['"float"', '"double"']
+    if cpp_type in integer_types:
+        # self.sos_kernel.warn('converting integer type')
+        return int(value)
+    elif cpp_type in real_types:
+        if value[-1] == 'f':
+            value = value[:-1]
+        # self.sos_kernel.warn('converting real number type')
+        return float(value)
+    elif cpp_type == '"long double"':
+        # self.sos_kernel.warn('converting long double number type')
+        return np.longdouble(value)
+    elif cpp_type == '"char"':
+        # self.sos_kernel.warn('converting char type')
+        return value
+    elif cpp_type == '"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"':
+        return value
+    elif cpp_type == '"bool"':
+        if value == 'true':
+            return True
+        else:
+            return False
+
 class sos_xeus_cling:
     background_color = {'C++11': '#B3BFFF', 'C++14': '#D5CCFF', 'C++17': '#EAE6FF'}
     supported_kernels = {'C++11': ['xeus-cling-cpp11'], 'C++14' : ['xeus-cling-cpp14'], 'C++17' : ['xeus-cling-cpp17']}
@@ -105,8 +131,6 @@ class sos_xeus_cling:
             #unsupported type
             return None
 
-            
-
     def get_vars(self, names):
         for name in names:
             # self.sos_kernel.warn(name)
@@ -116,37 +140,28 @@ class sos_xeus_cling:
                 self.sos_kernel.run_cell(cpp_repr, True, False,
                  on_error=f'Failed to put variable {name} to C++')
 
-    def put_vars(self, items, to_kernel=None):
+    def put_vars(self, names, to_kernel=None):
         result = {}
-        for item in items:
-            # item - string with variable name (in C++)
-            value = self.sos_kernel.get_response('std::cout<<{};'.format(item), ('stream',))[0][1]['text']
-            cpp_type = self.sos_kernel.get_response(f'type({item})', ('execute_result',))[0][1]['data']['text/plain']
-            # self.sos_kernel.warn(value)
-            # self.sos_kernel.warn(cpp_type)
+        for name in names:
+            # name - string with variable name (in C++)
+            cpp_type = self.sos_kernel.get_response(f'type({name})', ('execute_result',))[0][1]['data']['text/plain']
 
-            #Convert string value to appropriate type in SoS
-            integer_types = ['"int"', '"short"', '"long"', '"long long"']
-            real_types = ['"float"', '"double"']
-            if cpp_type in integer_types:
-                # self.sos_kernel.warn('converting integer type')
-                result[item] = int(value)
-            elif cpp_type in real_types:
-                if value[-1] == 'f':
-                    value = value[:-1]
-                # self.sos_kernel.warn('converting real number type')
-                result[item] = float(value)
-            elif cpp_type == '"long double"':
-                # self.sos_kernel.warn('converting long double number type')
-                result[item] = np.longdouble(value)
-            elif cpp_type == '"char"':
-                # self.sos_kernel.warn('converting char type')
-                result[item] = value
-            elif cpp_type == '"bool"':
-                if value == 'true':
-                    result[item] = True
-                else:
-                    result[item] = False
-            else:
-                self.sos_kernel.warn(f'Type {cpp_type} is not supported')
+            if cpp_type in ('"int"', '"short"', '"long"', '"long long"', '"float"', '"double"', '"long double"', '"char"', '"bool"', '"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"'):
+                #do scalar conversion
+                value = self.sos_kernel.get_response(f'std::cout<<{name};', ('stream',))[0][1]['text']
+                result[name] = _cpp_scalar_to_sos(cpp_type, value)
+            elif cpp_type.startswith('"std::map'):
+                #convert map
+                result[name] = dict()
+            elif cpp_type.startswith('"xt::xarray_container') or cpp_type.startswith('"xt::xfunction'):
+                #convert xarray
+                flat_array = eval(self.sos_kernel.get_response(f'std::cout<<xt::flatten({name});', ('stream',))[0][1]['text'].replace('{','[').replace('}',']'))
+                shape = eval('(' + self.sos_kernel.get_response(f'for (auto& el : {name}.shape()) {{std::cout << el << ", "; }}', ('stream',))[0][1]['text'] + ')')  #https://github.com/QuantStack/xtensor/issues/1247
+                result[name] = np.array(flat_array).reshape(shape)
+            elif cpp_type.startswith('"xf::xvariable_container'):
+                #convert xframe to pd.dataframe
+                result[name] = pd.DataFrame()
+            
+            # else:
+            #     self.sos_kernel.warn(f'Type {cpp_type} is not supported')
         return result

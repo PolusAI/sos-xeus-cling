@@ -50,5 +50,5 @@ Non-scalar types
 |------------------|--------------------------------|
 | ❌`std::map`     | `dict`                         |
 | ❌`std::vector`  | `numpy.ndarray`                |
-| ❌Xtensor        | `numpy.ndarray`                |
+| Xtensor          | `numpy.ndarray`                |
 | ❌Xframe         | `pandas.DataFrame`             |
