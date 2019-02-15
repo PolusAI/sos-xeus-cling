@@ -151,8 +151,13 @@ class sos_xeus_cling:
                 value = self.sos_kernel.get_response(f'std::cout<<{name};', ('stream',))[0][1]['text']
                 result[name] = _cpp_scalar_to_sos(cpp_type, value)
             elif cpp_type.startswith('"std::map'):
-                #convert map
-                result[name] = dict()
+                #convert map to a dict of strings
+                value = '{' + self.sos_kernel.get_response(f'for (auto it={name}.begin(); it!={name}.end(); ++it) std::cout << "\\"" << it->first << "\\":\\"" << it->second << "\\",";', ('stream',))[0][1]['text'] + '}'
+                temp_dict = dict(eval(value))
+                #convert string to appropriate Python types
+                key_cpp_type = self.sos_kernel.get_response(f'type({name}.begin()->first)', ('execute_result',))[0][1]['data']['text/plain']
+                val_cpp_type = self.sos_kernel.get_response(f'type({name}.begin()->second)', ('execute_result',))[0][1]['data']['text/plain']
+                result[name] = dict({_cpp_scalar_to_sos(key_cpp_type, key) : _cpp_scalar_to_sos(val_cpp_type, val) for (key, val) in temp_dict.items()})
             elif cpp_type.startswith('"xt::xarray_container') or cpp_type.startswith('"xt::xfunction'):
                 #convert xarray
                 flat_array = eval(self.sos_kernel.get_response(f'std::cout<<xt::flatten({name});', ('stream',))[0][1]['text'].replace('{','[').replace('}',']'))
