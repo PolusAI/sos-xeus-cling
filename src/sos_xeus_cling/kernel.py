@@ -70,7 +70,7 @@ def _cpp_scalar_to_sos(cpp_type, value):
         return value
     elif cpp_type == '"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"':
         return value
-    elif cpp_type == '"bool"':
+    elif cpp_type in ['"bool"', '"std::_Bit_reference"']:
         if value == 'true':
             return True
         else:
@@ -146,7 +146,7 @@ class sos_xeus_cling:
             # name - string with variable name (in C++)
             cpp_type = self.sos_kernel.get_response(f'type({name})', ('execute_result',))[0][1]['data']['text/plain']
 
-            if cpp_type in ('"int"', '"short"', '"long"', '"long long"', '"float"', '"double"', '"long double"', '"char"', '"bool"', '"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"'):
+            if cpp_type in ('"int"', '"short"', '"long"', '"long long"', '"float"', '"double"', '"long double"', '"char"', '"bool"', '"std::_Bit_reference"', '"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"'):
                 #do scalar conversion
                 value = self.sos_kernel.get_response(f'std::cout<<{name};', ('stream',))[0][1]['text']
                 result[name] = _cpp_scalar_to_sos(cpp_type, value)
@@ -158,11 +158,20 @@ class sos_xeus_cling:
                 key_cpp_type = self.sos_kernel.get_response(f'type({name}.begin()->first)', ('execute_result',))[0][1]['data']['text/plain']
                 val_cpp_type = self.sos_kernel.get_response(f'type({name}.begin()->second)', ('execute_result',))[0][1]['data']['text/plain']
                 result[name] = dict({_cpp_scalar_to_sos(key_cpp_type, key) : _cpp_scalar_to_sos(val_cpp_type, val) for (key, val) in temp_dict.items()})
+            elif cpp_type.startswith('"std::vector'):
+                #convert std::vector to array of strings which hold variable values
+                flat_list = '[' + self.sos_kernel.get_response(f'for(auto it={name}.begin(); it!={name}.end(); ++it) std::cout << "\\"" << *it << "\\",";', ('stream',))[0][1]['text'] + ']'
+                el_type = self.sos_kernel.get_response(f'type(*{name}.begin())', ('execute_result',))[0][1]['data']['text/plain']
+                result[name] = np.array([_cpp_scalar_to_sos(el_type, el) for el in eval(flat_list)])
             elif cpp_type.startswith('"xt::xarray_container') or cpp_type.startswith('"xt::xfunction'):
                 #convert xarray
-                flat_array = eval(self.sos_kernel.get_response(f'std::cout<<xt::flatten({name});', ('stream',))[0][1]['text'].replace('{','[').replace('}',']'))
+                # flat_array = eval(self.sos_kernel.get_response(f'std::cout<<xt::flatten({name});', ('stream',))[0][1]['text'].replace('{','[').replace('}',']'))
+                flat_list = '[' + self.sos_kernel.get_response(f'for(auto it={name}.begin(); it!={name}.end(); ++it) std::cout << "\\"" << *it << "\\",";', ('stream',))[0][1]['text'] + ']'
+                # self.sos_kernel.warn(eval(flat_list))
                 shape = eval('(' + self.sos_kernel.get_response(f'for (auto& el : {name}.shape()) {{std::cout << el << ", "; }}', ('stream',))[0][1]['text'] + ')')  #https://github.com/QuantStack/xtensor/issues/1247
-                result[name] = np.array(flat_array).reshape(shape)
+                el_type = self.sos_kernel.get_response(f'type(*{name}.begin())', ('execute_result',))[0][1]['data']['text/plain']
+                result[name] = np.array([_cpp_scalar_to_sos(el_type, el) for el in eval(flat_list)]).reshape(shape)
+                # result[name] = np.array([])
             elif cpp_type.startswith('"xf::xvariable_container'):
                 #convert xframe to pd.dataframe
                 result[name] = pd.DataFrame()
