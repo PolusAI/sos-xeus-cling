@@ -21,7 +21,11 @@ def homogeneous_type(seq):
     else:
         return True if all(isinstance(x, first_type) for x in iseq) else False
 
-cpp_init_statements = f'#include "{os.path.split(__file__)[0]}/utils.hpp"'
+#Include helper functions header and set std::cout rounding to a maximum length for double and float accuracy (https://stackoverflow.com/a/554780/6357726)
+cpp_init_statements = f'#include "{os.path.split(__file__)[0]}/utils.hpp"\nstd::cout.precision(std::numeric_limits<double>::digits10 + 1);'
+
+def stitch_cell_output(response):
+    return ''.join([stream[1]['text'] for stream in response ])
 
 def _sos_to_cpp_type(obj):
     ''' Returns corresponding C++ data type string for provided Python object '''
@@ -68,7 +72,7 @@ def _cpp_scalar_to_sos(cpp_type, value):
     elif cpp_type == '"char"':
         # self.sos_kernel.warn('converting char type')
         return value
-    elif cpp_type == '"std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >"':
+    elif cpp_type.startswith('"std::__cxx11::basic_string') or cpp_type.startswith('"xtl::xbasic_fixed_string'):
         return value
     elif cpp_type in ['"bool"', '"std::_Bit_reference"']:
         if value == 'true':
@@ -150,6 +154,7 @@ class sos_xeus_cling:
                 #do scalar conversion
                 value = self.sos_kernel.get_response(f'std::cout<<{name};', ('stream',))[0][1]['text']
                 result[name] = _cpp_scalar_to_sos(cpp_type, value)
+
             elif cpp_type.startswith('"std::map'):
                 #convert map to a dict of strings
                 value = '{' + self.sos_kernel.get_response(f'for (auto it={name}.begin(); it!={name}.end(); ++it) std::cout << "\\"" << it->first << "\\":\\"" << it->second << "\\",";', ('stream',))[0][1]['text'] + '}'
@@ -158,11 +163,13 @@ class sos_xeus_cling:
                 key_cpp_type = self.sos_kernel.get_response(f'type({name}.begin()->first)', ('execute_result',))[0][1]['data']['text/plain']
                 val_cpp_type = self.sos_kernel.get_response(f'type({name}.begin()->second)', ('execute_result',))[0][1]['data']['text/plain']
                 result[name] = dict({_cpp_scalar_to_sos(key_cpp_type, key) : _cpp_scalar_to_sos(val_cpp_type, val) for (key, val) in temp_dict.items()})
+
             elif cpp_type.startswith('"std::vector'):
                 #convert std::vector to array of strings which hold variable values
                 flat_list = '[' + self.sos_kernel.get_response(f'for(auto it={name}.begin(); it!={name}.end(); ++it) std::cout << "\\"" << *it << "\\",";', ('stream',))[0][1]['text'] + ']'
                 el_type = self.sos_kernel.get_response(f'type(*{name}.begin())', ('execute_result',))[0][1]['data']['text/plain']
                 result[name] = np.array([_cpp_scalar_to_sos(el_type, el) for el in eval(flat_list)])
+
             elif cpp_type.startswith('"xt::xarray_container') or cpp_type.startswith('"xt::xfunction'):
                 #convert xarray
                 # flat_array = eval(self.sos_kernel.get_response(f'std::cout<<xt::flatten({name});', ('stream',))[0][1]['text'].replace('{','[').replace('}',']'))
@@ -171,11 +178,16 @@ class sos_xeus_cling:
                 shape = eval('(' + self.sos_kernel.get_response(f'for (auto& el : {name}.shape()) {{std::cout << el << ", "; }}', ('stream',))[0][1]['text'] + ')')  #https://github.com/QuantStack/xtensor/issues/1247
                 el_type = self.sos_kernel.get_response(f'type(*{name}.begin())', ('execute_result',))[0][1]['data']['text/plain']
                 result[name] = np.array([_cpp_scalar_to_sos(el_type, el) for el in eval(flat_list)]).reshape(shape)
-                # result[name] = np.array([])
+
             elif cpp_type.startswith('"xf::xvariable_container'):
                 #convert xframe to pd.dataframe
-                result[name] = pd.DataFrame()
-            
-            # else:
-            #     self.sos_kernel.warn(f'Type {cpp_type} is not supported')
+                flat_list = eval( '[' + stitch_cell_output(self.sos_kernel.get_response(f'for(auto it={name}.data().begin(); it!={name}.data().end(); ++it) std::cout << "\\"" << *it << "\\",";', ('stream',))) + ']' )
+                shape = eval('(' + stitch_cell_output(self.sos_kernel.get_response(f'for (auto& el : {name}.shape()) {{std::cout << el << ", "; }}', ('stream',))) + ')')
+                el_type = self.sos_kernel.get_response(f'type(*{name}.data().begin())', ('execute_result',))[0][1]['data']['text/plain']
+                column_labels = eval('[' + stitch_cell_output( self.sos_kernel.get_response(f'print_dataframe_indices({name},1)', ('stream',)) ) + ']')
+                row_labels = eval('[' + stitch_cell_output( self.sos_kernel.get_response(f'print_dataframe_indices({name},0)', ('stream',)) ) + ']')
+                result[name] = pd.DataFrame(np.array([_cpp_scalar_to_sos(el_type, el) for el in flat_list]).reshape(shape), columns=column_labels, index=row_labels )
+
+            else:
+                self.sos_kernel.warn(f'Type {cpp_type} is not supported')
         return result

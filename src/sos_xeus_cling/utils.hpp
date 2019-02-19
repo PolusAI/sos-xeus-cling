@@ -33,3 +33,17 @@ template<class T> std::string type(const T& t) {
 //   long double: "long double",                   char *: "pointer to char",        \
 //        void *: "pointer to void",                int *: "pointer to int",         \
 //       default: "other")
+
+//Print row and column labels of xframe
+//Rework of view function from here: https://github.com/QuantStack/xframe/blob/e16299b1f572a98e4ac77010f646c0f99cf3e855/include/xframe/xio.hpp#L26 
+template <class T> 
+void print_dataframe_indices(const T& expr, const int& dim)
+{
+    const auto& dim_name = expr.dimension_mapping().labels()[dim];
+
+    for (std::size_t row_idx = 0; row_idx < expr.shape()[dim]; ++row_idx)
+    {
+        xtl::visit([](auto&& arg) { std::cout << "\"" << arg << "\","; }, expr.coordinates()[dim_name].label(row_idx));
+    }
+
+}
