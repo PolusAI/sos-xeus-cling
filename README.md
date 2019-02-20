@@ -4,11 +4,7 @@
 
 This language extension to SoS allows to use C++ with xeus-cling Jupyter kernel (https://github.com/QuantStack/xeus-cling) and exchange variables with other languages in Polyglot environment
 
-**NOTE: early stage development, not ready for use**
-
 ### Supported variable types for transfer
-
-Non-implemented type conversions are marked with ❌
 
 #### From SoS to C++ (`%get` magic):
 
@@ -29,7 +25,7 @@ Non-scalar types
 | `dict` (only homogeneous keys and values)             | `std::map<key_type, val_type>` |
 | Sequence (`list`, `tuple`; only homogeneous elements) | `std::vector<type>`            |
 | `numpy.ndarray`                                       | [Xtensor](https://github.com/QuantStack/xtensor) `xt::xarray`           |
-| ❌`pandas.DataFrame`                                    | [Xframe](https://github.com/QuantStack/xframe)                         |
+| `pandas.DataFrame`                                    | [Xframe](https://github.com/QuantStack/xframe)                         |
 |                                                       |                                |
 
 #### From C++ to SoS (`%put` magic):
@@ -48,7 +44,7 @@ Non-scalar types
 
 | Source: C++ type | Destination: SoS (Python) type |
 |------------------|--------------------------------|
-| ❌`std::map`     | `dict`                         |
-| ❌`std::vector`  | `numpy.ndarray`                |
-| ❌Xtensor        | `numpy.ndarray`                |
-| ❌Xframe         | `pandas.DataFrame`             |
+| `std::map`     | `dict`                         |
+| `std::vector`  | `numpy.ndarray`                |
+| Xtensor          | `numpy.ndarray`                |
+| Xframe         | `pandas.DataFrame`             |
