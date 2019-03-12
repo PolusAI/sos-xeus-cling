@@ -15,4 +15,4 @@ if _py_ver.major == 2 or (_py_ver.major == 3 and (_py_ver.minor, _py_ver.micro) 
 __sos_version__ = '1.0'
 
 # version of the sos-xeus-cling module
-__version__ = '0.0.1'
+__version__ = '0.1.0'
