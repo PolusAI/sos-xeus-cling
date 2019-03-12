@@ -1,8 +1,21 @@
 [![Build Status](https://travis-ci.com/LabShare/sos-xeus-cling.svg?branch=master)](https://travis-ci.com/LabShare/sos-xeus-cling)
+[![PyPI version](https://badge.fury.io/py/sos-xeus-cling.svg)](https://badge.fury.io/py/sos-xeus-cling)
+
 # sos-xeus-cling
 ## SoS extension for C++. Developed independently from original SoS team. Please refer to [SoS Homepage](http://vatlab.github.io/SoS/) for details.
 
 This language extension to SoS allows to use C++ with xeus-cling Jupyter kernel (https://github.com/QuantStack/xeus-cling) and exchange variables with other languages in Polyglot environment
+
+### Dependencies
+
+* gcc 
+`apt-get update; apt-get install gcc`
+* xeus-cling
+`conda install xeus-cling xwidgets notebook xtensor xtl xframe -c conda-forge/label/gcc7`
+* sos-notebook `pip install sos-notebook --upgrade; python -m sos_notebook.install`
+
+### Install
+`pip install sos-xeus-cling`
 
 ### Supported variable types for transfer
 
