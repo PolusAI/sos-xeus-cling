@@ -1,10 +1,10 @@
-dist: bionic
+dist: xenial
 group: edge
 os:
-    - linux
+  - linux
 language: python
 python:
-    - "3.7"
+  - "3.7"
 before_install:
   - sudo apt-get update
   - sudo apt-get install -y gcc
@@ -19,7 +19,7 @@ before_install:
   # SoS Notebook
   - sudo apt-get install libmagickwand-dev graphviz
   - pip install jedi notebook nbconvert nbformat pyyaml psutil tqdm scipy
-  - pip install pygments ipython wand graphviz sos sos-bash sos-python sos-notebook
+  - pip install pygments ipython wand graphviz sos sos-notebook
   - python -m sos_notebook.install
   # xeus-cling
   - conda install xeus-cling xwidgets notebook xtensor xtl xframe -c conda-forge/label/gcc7
@@ -27,9 +27,19 @@ before_install:
 
 sudo: required
 services:
-    - docker
+  - docker
 install: "pip install . -U"
 before_script:
-    - cd test
+  - cd test
 script:
-    - pytest -x -v  --cov-report=xml
+  - pytest -x -v  --cov-report=xml
+jobs:
+  include:
+    - stage: release
+      if: branch = master
+      deploy:
+        provider: pypi
+        user: 
+          secure: $PYPI_LOGIN
+        password:
+          secure: $PYPI_PASSWORD
